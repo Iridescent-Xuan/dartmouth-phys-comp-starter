@@ -24,7 +24,7 @@ public:
 	////Body force
 	Vector3 g = Vector3::Unit(1) * (double)-1.;			//// gravity
 
-	enum class TimeIntegration { ExplicitEuler, ImplicitEuler } time_integration = TimeIntegration::ExplicitEuler;	//// set to ExplicitEuler by default; change it to ImplicitEuler when you work on Task 2 (Option 2)
+	enum class TimeIntegration { ExplicitEuler, ImplicitEuler } time_integration = TimeIntegration::ImplicitEuler;	//// set to ExplicitEuler by default; change it to ImplicitEuler when you work on Task 2 (Option 2)
 
 	////Implicit time integration
 	SparseMatrixT K;
@@ -107,12 +107,26 @@ public:
 	{
 		/* Your implementation start */
 
+		// TODO: what is @dt used for?
+		for (int i = 0; i < particles.Size(); i++) { particles.F(i) += particles.M(i) * g; }
+
 		/* Your implementation end */
 	}
 
 	void Apply_Spring_Force(const double dt)
 	{
 		/* Your implementation start */
+
+		assert(springs.size() == kd.size());
+		assert(springs.size() == ks.size());
+
+		for (int i = 0; i < springs.size(); ++i) {
+			int pi = springs[i][0];
+			int pj = springs[i][1];
+
+			particles.F(pi) += Spring_Force(i);
+			particles.F(pj) -= Spring_Force(i);
+		}
 
 		/* Your implementation end */
 	}
@@ -121,12 +135,22 @@ public:
 	{
 		/* Your implementation start */
 
+		for (auto i : boundary_nodes) {
+			particles.V(i.first) = i.second;
+			particles.F(i.first) = Vector3::Zero();
+		}
+
 		/* Your implementation end */
 	}
 
 	void Time_Integration(const double dt)
 	{
 		/* Your implementation start */
+
+		for (int i = 0; i < particles.Size(); ++i) {
+			particles.V(i) += dt * particles.F(i) / particles.M(i);
+			particles.X(i) += dt * particles.V(i);
+		}
 
 		/* Your implementation end */
 	}
@@ -138,9 +162,14 @@ public:
 
 		/* Your implementation start */
 
+		Vector2i spring = springs[spring_index];
+		Vector3d l_ij = particles.X(spring[1]) - particles.X(spring[0]);
+		Vector3 f_s = ks[spring_index] * (l_ij.norm() - rest_length[spring_index]) * l_ij.normalized();
+		Vector3 f_d = kd[spring_index] * (particles.V(spring[1]) - particles.V(spring[0])).dot(l_ij.normalized()) * l_ij.normalized();
+
 		/* Your implementation end */
 
-		return Vector3::Zero();	////REPLACE this line with your own implementation
+		return f_s + f_d;	////REPLACE this line with your own implementation
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -187,6 +216,37 @@ public:
 
 		/* Your implementation start */
 
+		for (int i = 0; i < particles.Size(); ++i) {
+			// for K
+			// M
+			for (int d = 0; d < 3; ++d) {
+				K.coeffRef(i * 3 + d, i * 3 + d) = particles.M(i);
+			}
+
+			// for b
+			// M * v^n + dt * f^n
+			Set_Block(b, i, particles.M(i) * particles.V(i) + dt * particles.F(i));
+		}
+
+		for (int i = 0; i < springs.size(); ++i) {
+			int pi = springs[i][0];
+			int pj = springs[i][1];
+
+			Matrix3 Ks, Kd;
+			Compute_Ks_Block(i, Ks);
+			Compute_Kd_Block(i, Kd);
+
+			// for K
+			// -dt * D
+			Add_Block_Helper(K, pi, pj, -dt * Kd);
+			// -dt^2 * K
+			Add_Block_Helper(K, pi, pj, -dt * dt * Ks);
+
+			// for d
+			Add_Block(b, pi, -dt * Kd * particles.V(pi));
+			Add_Block(b, pj, dt * Kd * particles.V(pj));
+		}
+
 		/* Your implementation end */
 	}
 
@@ -195,6 +255,14 @@ public:
 	{
 		/* Your implementation start */
 
+		int pi = springs[s][0];
+		int pj = springs[s][1];
+		Vector3d x_ji = particles.X(pj) - particles.X(pi);
+
+		Ks = (rest_length[s] / x_ji.norm() - 1) * Matrix3d::Identity();
+		Ks -= rest_length[s] * x_ji * x_ji.transpose() / pow(x_ji.norm(), 3);
+		Ks *= ks[s];
+
 		/* Your implementation end */
 	}
 
@@ -202,6 +270,12 @@ public:
 	void Compute_Kd_Block(const int s, Matrix3& Kd)
 	{
 		/* Your implementation start */
+
+		int pi = springs[s][0];
+		int pj = springs[s][1];
+		Vector3d x_ji = particles.X(pj) - particles.X(pi);
+		Kd = -1.0 * x_ji * x_ji.transpose() / pow(x_ji.norm(), 2);
+		Kd *= kd[s];
 
 		/* Your implementation end */
 	}
