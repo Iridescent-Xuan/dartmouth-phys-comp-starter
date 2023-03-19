@@ -7,7 +7,7 @@
 #include "Common.h"
 #include "Grid.h"
 #include "Particles.h"
-  
+
 //////////////////////////////////////////////////////////////////////////
 ////Grid fluid simulator 2D
 class GridFluid
@@ -22,93 +22,106 @@ public:
 	std::vector<double> smoke_den;							//// smoke density
 
 	//// source-related variables
-	Vector2 src_pos=Vector2::Ones()*(double).5;				//// source position
-	Vector2 src_vel=Vector2::Unit(0)*(double)1.5;			//// source velocity
-	double src_radius=(double).1;							//// source radius
+	Vector2 src_pos = Vector2::Ones() * (double).5;				//// source position
+	Vector2 src_vel = Vector2::Unit(0) * (double)1.5;			//// source velocity
+	double src_radius = (double).1;							//// source radius
 
 	//// grid-related variables
-	int node_num=0;											//// total number of grid nodes
+	int node_num = 0;											//// total number of grid nodes
 
 	//////////////////////////////////////////////////////////////////////////
 	//// Helper functions for grid access
 	//// Read these functions carefully before your implementation
 	//////////////////////////////////////////////////////////////////////////
 	//// return the grid node index given its coordinate
-	int Idx(const Vector2i& node_coord) const 
-	{return grid.Node_Index(node_coord);}
-	
+	int Idx(const Vector2i& node_coord) const
+	{
+		return grid.Node_Index(node_coord);
+	}
+
 	//// return the grid node coordinate given its index
 	Vector2i Coord(const int node_index) const
-	{return grid.Node_Coord(node_index);}
+	{
+		return grid.Node_Coord(node_index);
+	}
 
 	//// return the grid node position given its index
 	Vector2 Pos(const int node_index) const
-	{return grid.Node(node_index);}
+	{
+		return grid.Node(node_index);
+	}
 
 	//// return the grid node position given its coordinate
 	Vector2 Pos(const Vector2i& node_coord) const
-	{return grid.Node(node_coord);}
+	{
+		return grid.Node(node_coord);
+	}
 
 	//// cross product in 2D: w is a vector orthogonal to the plane
-	Vector2 Cross(const Vector2& v,const double w) const
-	{return Vector2(v[1]*w,-v[0]*w);}
+	Vector2 Cross(const Vector2& v, const double w) const
+	{
+		return Vector2(v[1] * w, -v[0] * w);
+	}
 
 	//// check if a grid node is on the grid boundary
 	bool Bnd(const Vector2i& node_coord) const
 	{
-		for(int i=0;i<2;i++){
-			if(node_coord[i]==0||node_coord[i]==grid.node_counts[i]-1)
+		for (int i = 0; i < 2; i++) {
+			if (node_coord[i] == 0 || node_coord[i] == grid.node_counts[i] - 1)
 				return true;
 		}
-		return false;	
+		return false;
 	}
 
 	bool Bnd(const int node_index) const
-	{return Bnd(Coord(node_index));}
+	{
+		return Bnd(Coord(node_index));
+	}
 
 	////clamp pos to ensure it is always inside the grid
 	Vector2 Clamp_Pos(const Vector2& pos)
 	{
-		double epsilon=grid.dx*(double)1e-3;
-		Vector2 clamped_pos=pos;
-		for(int i=0;i<2;i++){
-			if(pos[i]<=grid.domain_min[i])clamped_pos[i]=grid.domain_min[i]+epsilon;
-			else if(pos[i]>=grid.domain_max[i])clamped_pos[i]=grid.domain_max[i]-epsilon;}	
+		double epsilon = grid.dx * (double)1e-3;
+		Vector2 clamped_pos = pos;
+		for (int i = 0; i < 2; i++) {
+			if (pos[i] <= grid.domain_min[i])clamped_pos[i] = grid.domain_min[i] + epsilon;
+			else if (pos[i] >= grid.domain_max[i])clamped_pos[i] = grid.domain_max[i] - epsilon;
+		}
 		return clamped_pos;
 	}
 
 	//// calculate the index, fraction, and interpolated values from the array
 	void Calculate_Cell_Index_And_Position(const Vector2& pos,/*result*/Vector2i& cell,/*result*/Vector2& frac)
 	{
-		Vector2 cell_with_frac=(pos-grid.domain_min)/grid.dx;
-		cell=cell_with_frac.template cast<int>();
-		frac=cell_with_frac-cell.template cast<double>();		
+		Vector2 cell_with_frac = (pos - grid.domain_min) / grid.dx;
+		cell = cell_with_frac.template cast<int>();
+		frac = cell_with_frac - cell.template cast<double>();
 	}
 
 	//// Interpolation for scalars with a clamped position. This function calls the bi-linear interpolation function you will implement.
-	double Interpolate(const std::vector<double>& u,Vector2& pos)
+	double Interpolate(const std::vector<double>& u, Vector2& pos)
 	{
 		Vector2i cell;
 		Vector2 frac;
-		pos=Clamp_Pos(pos);
-		Calculate_Cell_Index_And_Position(pos,cell,frac);
-		return Bilinear_Interpolation(cell,frac,u);
+		pos = Clamp_Pos(pos);
+		Calculate_Cell_Index_And_Position(pos, cell, frac);
+		return Bilinear_Interpolation(cell, frac, u);
 	}
 
 	//// Interpolation for vectors with a clamped position. This function calls the bi-linear interpolation function you will implement.
-	Vector2 Interpolate(const std::vector<Vector2>& u,Vector2& pos)
+	Vector2 Interpolate(const std::vector<Vector2>& u, Vector2& pos)
 	{
 		Vector2i cell;
 		Vector2 frac;
-		pos=Clamp_Pos(pos);
-		Calculate_Cell_Index_And_Position(pos,cell,frac);
-		return Bilinear_Interpolation(cell,frac,u);
+		pos = Clamp_Pos(pos);
+		Calculate_Cell_Index_And_Position(pos, cell, frac);
+		return Bilinear_Interpolation(cell, frac, u);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	//// TASK 1: bi-linear interpolation
 	//// 2D bi-linear interpolation for scalars
-	double Bilinear_Interpolation(const Vector2i& cell,const Vector2& frac,const std::vector<double>& u)
+	double Bilinear_Interpolation(const Vector2i& cell, const Vector2& frac, const std::vector<double>& u)
 	{
 		/*Your implementation ends*/
 		return 0.;		//// replace this line with your implementation
@@ -116,7 +129,7 @@ public:
 	}
 
 	//// 2D bi-linear interpolation for vectors
-	Vector2 Bilinear_Interpolation(const Vector2i& cell,const Vector2& frac,const std::vector<Vector2>& u)
+	Vector2 Bilinear_Interpolation(const Vector2i& cell, const Vector2& frac, const std::vector<Vector2>& u)
 	{
 		/*Your implementation starts*/
 		return Vector2::Zero();		//// replace this line with your implementation
@@ -126,18 +139,18 @@ public:
 	//// initialize the grid and fields
 	virtual void Initialize()
 	{
-		int n=64;								//// Attention: change this variable to change the grid resolution!
-		Vector2i cell_counts=Vector2i(n,n/2);
-		double dx=(double)2./(double)n;
-		Vector2 domain_min=Vector2::Zero();
-		grid.Initialize(cell_counts,dx,domain_min);
-		node_num=grid.node_counts.prod();
+		int n = 64;								//// Attention: change this variable to change the grid resolution!
+		Vector2i cell_counts = Vector2i(n, n / 2);
+		double dx = (double)2. / (double)n;
+		Vector2 domain_min = Vector2::Zero();
+		grid.Initialize(cell_counts, dx, domain_min);
+		node_num = grid.node_counts.prod();
 
-		u.resize(node_num,Vector2::Unit(0)*(double).01);
-		div_u.resize(node_num,(double)0);
-		p.resize(node_num,(double)0);
-		vor.resize(node_num,(double)0);
-		smoke_den.resize(node_num,(double)0);
+		u.resize(node_num, Vector2::Unit(0) * (double).01);
+		div_u.resize(node_num, (double)0);
+		p.resize(node_num, (double)0);
+		vor.resize(node_num, (double)0);
+		smoke_den.resize(node_num, (double)0);
 	}
 
 	//// timestep update
@@ -157,7 +170,7 @@ public:
 	//// Hint: You need to use the source-related variables declared at the beginning of the class
 	void Source()
 	{
-		for(int i=0;i<node_num;i++){
+		for (int i = 0; i < node_num; i++) {
 			/*Your implementation starts*/
 
 			/*Your implementation ends*/
@@ -170,12 +183,12 @@ public:
 	virtual void Advection(double dt)
 	{
 		//// Attention: We made a copy for both u and smoke_den before advection. Why?
-		std::vector<Vector2> u_copy=u;
-		std::vector<double> den_copy=smoke_den;
+		std::vector<Vector2> u_copy = u;
+		std::vector<double> den_copy = smoke_den;
 
-		for(int i=0;i<node_num;i++){
-			u[i]=Vector2::Zero();
-			smoke_den[i]=0.;
+		for (int i = 0; i < node_num; i++) {
+			u[i] = Vector2::Zero();
+			smoke_den[i] = 0.;
 
 			/*Your implementation starts*/
 
@@ -187,41 +200,42 @@ public:
 	//// TASK 4: project the velocity to a divergence-free field
 	virtual void Projection()
 	{
-		double dx=grid.dx;
-		double dx2=grid.dx*grid.dx;
+		double dx = grid.dx;
+		double dx2 = grid.dx * grid.dx;
 
 		//// (Sample) Projection step 1: calculate the velocity divergence on each node
 		//// Read this sample code to learn how to access data with the node index and coordinate
-		std::fill(div_u.begin(),div_u.end(),(double)0);
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore the nodes on the boundary
-			Vector2i node=Coord(i);
-			div_u[i]=(double)0;
+		std::fill(div_u.begin(), div_u.end(), (double)0);
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore the nodes on the boundary
+			Vector2i node = Coord(i);
+			div_u[i] = (double)0;
 
-			for(int j=0;j<2;j++){
-				Vector2 u_1=u[Idx(node-Vector2i::Unit(j))];
-				Vector2 u_2=u[Idx(node+Vector2i::Unit(j))];
-				div_u[i]+=(u_2[j]-u_1[j])/(2*dx);}
+			for (int j = 0; j < 2; j++) {
+				Vector2 u_1 = u[Idx(node - Vector2i::Unit(j))];
+				Vector2 u_2 = u[Idx(node + Vector2i::Unit(j))];
+				div_u[i] += (u_2[j] - u_1[j]) / (2 * dx);
+			}
 		}
 
 		//// TASK 4.1: Projection step 2: solve the Poisson's equation -lap p= div u using the Gauss-Seidel iterations
-		std::fill(p.begin(),p.end(),(double)0);
-		for(int iter=0;iter<40;iter++){
-			for(int i=0;i<node_num;i++){
-				if(Bnd(i))continue;		////ignore the nodes on the boundary
-				Vector2i node=Coord(i);
+		std::fill(p.begin(), p.end(), (double)0);
+		for (int iter = 0; iter < 40; iter++) {
+			for (int i = 0; i < node_num; i++) {
+				if (Bnd(i))continue;		////ignore the nodes on the boundary
+				Vector2i node = Coord(i);
 
 				/*Your implementation starts*/
 
 				/*Your implementation ends*/
 			}
 		}
-		
+
 		//// TASK 4.2: Projection step 3: correct velocity with the pressure gradient
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore boundary nodes
-			Vector2i node=Coord(i);
-			Vector2 grad_p=Vector2::Zero();
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore boundary nodes
+			Vector2i node = Coord(i);
+			Vector2 grad_p = Vector2::Zero();
 
 			/*Your implementation starts*/
 
@@ -233,14 +247,14 @@ public:
 	//// TASK 5: vorticity confinement
 	void Vorticity_Confinement(const double dt)
 	{
-		double dx=grid.dx;
+		double dx = grid.dx;
 
 		////TASK 5.1: update vorticity
-		std::fill(vor.begin(),vor.end(),(double)0);
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore boundary nodes
-			Vector2i node=Coord(i);
-			vor[i]=(double)0;
+		std::fill(vor.begin(), vor.end(), (double)0);
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore boundary nodes
+			Vector2i node = Coord(i);
+			vor[i] = (double)0;
 
 			/*Your implementation starts*/
 
@@ -248,11 +262,11 @@ public:
 		}
 
 		////TASK 5.2: update N = (grad(|vor|)) / |grad(|vor|)|
-		std::vector<Vector2> N(node_num,Vector2::Zero());
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore boundary nodes
-			Vector2i node=Coord(i);
-			N[i]=Vector2::Zero();
+		std::vector<Vector2> N(node_num, Vector2::Zero());
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore boundary nodes
+			Vector2i node = Coord(i);
+			N[i] = Vector2::Zero();
 
 			/*Your implementation starts*/
 
@@ -260,11 +274,11 @@ public:
 		}
 
 		//// calculate confinement force and use it to update velocity
-		double vor_conf_coef=(double)4;
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore boundary nodes
-			Vector2 f=vor_conf_coef*dx*Cross(N[i],vor[i]);
-			u[i]+=f*dt;		////we don't have mass by assuming density=1
+		double vor_conf_coef = (double)4;
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore boundary nodes
+			Vector2 f = vor_conf_coef * dx * Cross(N[i], vor[i]);
+			u[i] += f * dt;		////we don't have mass by assuming density=1
 		}
 	}
 
@@ -273,33 +287,33 @@ public:
 	//// This is the Gaussian kernel function you might need to use in calculating your confinement force
 	double Kernel(const double length)
 	{
-		double r=grid.dx*(double)4;
-		if(length>r)return (double)0;
-		double coef1=(double)1/(double)2*(r*r);
-		double coef2=(double)1/(r*r);
-		return (double).1*coef2*exp(-length*length*coef1);
+		double r = grid.dx * (double)4;
+		if (length > r)return (double)0;
+		double coef1 = (double)1 / (double)2 * (r * r);
+		double coef2 = (double)1 / (r * r);
+		return (double).1 * coef2 * exp(-length * length * coef1);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	//// TASK 6 (optional): vorticity confinement with vortex particles
-	
+
 	void Update_Vortex_Particles(const double dt)
 	{
 		//// Now we use vortex particles to preserve the vorticity in the domain
 		//// particles.C represents the vorticity carried on each particle
 		//// particles.I denotes whether the particle is valid for calculating vorticity confinement: skip the particle if(particles.I(i)==-1) 
-		for(int i=0;i<node_num;i++){
-			if(Bnd(i))continue;		////ignore boundary nodes
-			Vector2i node=Coord(i);
-			Vector2 node_pos=grid.Node(node);
-			vor[i]=(double)0;
+		for (int i = 0; i < node_num; i++) {
+			if (Bnd(i))continue;		////ignore boundary nodes
+			Vector2i node = Coord(i);
+			Vector2 node_pos = grid.Node(node);
+			vor[i] = (double)0;
 
 			//// Calculate the confinement force for each grid node due to each particle
 			//// Hint: recall your implementation in the vorticity confinement function
 			/*Your implementation starts*/
 
 			/*Your implementation ends*/
-		}		
+		}
 	}
 	//////////////////////////////////////////////////////////////////////////
 
@@ -310,14 +324,14 @@ public:
 	void Initialize_Visualization_Particles()
 	{
 		particles.Resize(1);
-		particles.X(0)=Vector2::Zero();
+		particles.X(0) = Vector2::Zero();
 	}
 
 	void Update_Visualization_Particles(const double dt)
 	{
-		for(int i=0;i<particles.Size();i++){
-			Vector2 v=Interpolate(u,particles.X(i));
-			particles.X(i)+=v*dt;
+		for (int i = 0; i < particles.Size(); i++) {
+			Vector2 v = Interpolate(u, particles.X(i));
+			particles.X(i) += v * dt;
 		}
 	}
 };

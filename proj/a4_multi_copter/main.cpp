@@ -9,7 +9,7 @@
 #ifndef __Main_cpp__
 #define __Main_cpp__
 
-int main(int argc,char* argv[])
+int main(int argc, char* argv[])
 {
 	//// ATTENTION: You need to set flag=0 for simulation tests and flag=1 for controller tests
 	//// 0-Test simulation (LV1, 3.1-3.2)

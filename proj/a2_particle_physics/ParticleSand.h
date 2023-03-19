@@ -10,29 +10,32 @@
 #include "ImplicitGeometry.h"
 
 template<int d> class ParticleSand
-{using VectorD=Vector<double,d>;using VectorDi=Vector<int,d>;using MatrixD=Matrix<double,d>;
+{
+	using VectorD = Vector<double, d>; using VectorDi = Vector<int, d>; using MatrixD = Matrix<double, d>;
 public:
 	Particles<d> particles;
-	double ks=(double)2e2;		////stiffness for the collision force
-	double kd=(double).5e1;		////damping for the collision force
-	VectorD g=VectorD::Unit(1)*(double)-1.;	////gravity
+	double ks = (double)2e2;		////stiffness for the collision force
+	double kd = (double).5e1;		////damping for the collision force
+	VectorD g = VectorD::Unit(1) * (double)-1.;	////gravity
 
 	////a list of implicit geometries describing the environment, by default it has one element, a circle with its normals pointing inward (Bowl)
-	std::vector<ImplicitGeometry<d>* > env_objects;	
+	std::vector<ImplicitGeometry<d>* > env_objects;
 	std::vector<Vector2i> particle_particle_collision_pairs;
 	std::vector<Vector2i> particle_environment_collision_pairs;
 
-	std::vector<VectorD> my_object_vertices={{-1.,5.},{1.,5.}};	////this array stores the positions of the contour of your object for visualization
+	std::vector<VectorD> my_object_vertices = { {-1.,5.},{1.,5.} };	////this array stores the positions of the contour of your object for visualization
 
 	virtual void Advance(const double dt)
 	{
 		////Clear forces on particles
-		for(int i=0;i<particles.Size();i++){
-			particles.F(i)=VectorD::Zero();}
+		for (int i = 0; i < particles.Size(); i++) {
+			particles.F(i) = VectorD::Zero();
+		}
 
 		////Accumulate body forces
-		for(int i=0;i<particles.Size();i++){
-			particles.F(i)+=particles.M(i)*g;}
+		for (int i = 0; i < particles.Size(); i++) {
+			particles.F(i) += particles.M(i) * g;
+		}
 
 		Particle_Environment_Collision_Detection();
 		Particle_Environment_Collision_Response();
@@ -40,9 +43,10 @@ public:
 		Particle_Particle_Collision_Response();
 		Particle_My_Object_Collision_Detection_And_Response();
 
-		for(int i=0;i<particles.Size();i++){
-			particles.V(i)+=particles.F(i)/particles.M(i)*dt;
-			particles.X(i)+=particles.V(i)*dt;}
+		for (int i = 0; i < particles.Size(); i++) {
+			particles.V(i) += particles.F(i) / particles.M(i) * dt;
+			particles.X(i) += particles.V(i) * dt;
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -55,21 +59,21 @@ public:
 		/* Your implementation start */
 		/* Your implementation end */
 	}
-		
+
 	//////////////////////////////////////////////////////////////////////////
 	////YOUR IMPLEMENTATION (P1 TASK): compute the penalty-based collision force for the particles that are colliding with the env_objects
 	////The collision response force consists of a spring force and a damping force
 	virtual void Particle_Environment_Collision_Response()
 	{
-		for(int pair_idx=0;pair_idx<particle_environment_collision_pairs.size();pair_idx++){
-			int i=particle_environment_collision_pairs[pair_idx][0];	////particle index
-			int j=particle_environment_collision_pairs[pair_idx][1];	////env_objects index
-			VectorD collision_force=VectorD::Zero();
+		for (int pair_idx = 0; pair_idx < particle_environment_collision_pairs.size(); pair_idx++) {
+			int i = particle_environment_collision_pairs[pair_idx][0];	////particle index
+			int j = particle_environment_collision_pairs[pair_idx][1];	////env_objects index
+			VectorD collision_force = VectorD::Zero();
 
 			/* Your implementation start */
 			/* Your implementation end */
-			
-			particles.F(i)+=collision_force;
+
+			particles.F(i) += collision_force;
 		}
 	}
 
@@ -88,10 +92,10 @@ public:
 	////The collision response force for each pair consists of a spring force and a damping force
 	virtual void Particle_Particle_Collision_Response()
 	{
-		for(int pair_idx=0;pair_idx<particle_particle_collision_pairs.size();pair_idx++){
-			int i=particle_particle_collision_pairs[pair_idx][0];	////the first particle index in the pair
-			int j=particle_particle_collision_pairs[pair_idx][1];	////the second particle index in the pair
-			VectorD collision_force=VectorD::Zero();
+		for (int pair_idx = 0; pair_idx < particle_particle_collision_pairs.size(); pair_idx++) {
+			int i = particle_particle_collision_pairs[pair_idx][0];	////the first particle index in the pair
+			int j = particle_particle_collision_pairs[pair_idx][1];	////the second particle index in the pair
+			VectorD collision_force = VectorD::Zero();
 
 			/* Your implementation start */
 			/* Your implementation end */
@@ -111,14 +115,14 @@ public:
 		//my_object_vertices.push_back(Vector2(-2.,5.));
 		//my_object_vertices.push_back(Vector2(2.,5.));
 
-		for(int i=0;i<particles.Size();i++){
-			VectorD collision_force=VectorD::Zero();
-			
+		for (int i = 0; i < particles.Size(); i++) {
+			VectorD collision_force = VectorD::Zero();
+
 			/* Your implementation start */
 			/* Your implementation end */
-			
-			particles.F(i)+=collision_force;
-		}	
+
+			particles.F(i) += collision_force;
+		}
 	}
 };
 

@@ -10,11 +10,11 @@
 #ifndef __Main_cpp__
 #define __Main_cpp__
 
-int main(int argc,char* argv[])
+int main(int argc, char* argv[])
 {
 	GridFluidDriver driver;
 	driver.Initialize();
-	driver.Run();	
+	driver.Run();
 }
 
 #endif

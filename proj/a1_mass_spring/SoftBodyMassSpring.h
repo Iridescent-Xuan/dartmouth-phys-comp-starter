@@ -19,57 +19,61 @@ public:
 	std::vector<double> kd;								//// Each element in kd specifies the damping coefficient of a spring
 
 	////Boundary nodes
-	std::unordered_map<int,Vector3> boundary_nodes;		//// boundary_notes stores the mapping from node index to its specified velocity. E.g., a fixed node will have a zero velocity.
+	std::unordered_map<int, Vector3> boundary_nodes;		//// boundary_notes stores the mapping from node index to its specified velocity. E.g., a fixed node will have a zero velocity.
 
 	////Body force
-	Vector3 g=Vector3::Unit(1)*(double)-1.;			//// gravity
-	
-	enum class TimeIntegration{ExplicitEuler,ImplicitEuler} time_integration=TimeIntegration::ExplicitEuler;	//// set to ExplicitEuler by default; change it to ImplicitEuler when you work on Task 2 (Option 2)
+	Vector3 g = Vector3::Unit(1) * (double)-1.;			//// gravity
+
+	enum class TimeIntegration { ExplicitEuler, ImplicitEuler } time_integration = TimeIntegration::ExplicitEuler;	//// set to ExplicitEuler by default; change it to ImplicitEuler when you work on Task 2 (Option 2)
 
 	////Implicit time integration
 	SparseMatrixT K;
-	VectorX u,b;
+	VectorX u, b;
 
 	virtual void Initialize()
 	{
 		////Initialize default spring parameters for standard tests
-		double ks_0=(double)1,kd_0=(double)1;
-		switch(time_integration){
-		case TimeIntegration::ExplicitEuler:{
-			ks_0=(double)5e2;
-			kd_0=(double)1e1;
+		double ks_0 = (double)1, kd_0 = (double)1;
+		switch (time_integration) {
+		case TimeIntegration::ExplicitEuler: {
+			ks_0 = (double)5e2;
+			kd_0 = (double)1e1;
 		}break;
-		case TimeIntegration::ImplicitEuler:{
-			ks_0=(double)1e5;
-			kd_0=(double)1e1;			
-		}break;}
+		case TimeIntegration::ImplicitEuler: {
+			ks_0 = (double)1e5;
+			kd_0 = (double)1e1;
+		}break;
+		}
 
 		////Allocate arrays for springs and parameters
 		rest_length.resize(springs.size());
-		for(int i=0;i<(int)springs.size();i++){const Vector2i& s=springs[i];
-			rest_length[i]=(particles.X(s[0])-particles.X(s[1])).norm();}
-		ks.resize(springs.size(),ks_0);
-		kd.resize(springs.size(),kd_0);
+		for (int i = 0; i < (int)springs.size(); i++) {
+			const Vector2i& s = springs[i];
+			rest_length[i] = (particles.X(s[0]) - particles.X(s[1])).norm();
+		}
+		ks.resize(springs.size(), ks_0);
+		kd.resize(springs.size(), kd_0);
 
 		////Allocate sparse matrix if using implicit time integration 
 		////This function needs to be called for only once since the mesh doesn't change during the simulation)
-		if(time_integration==TimeIntegration::ImplicitEuler)
+		if (time_integration == TimeIntegration::ImplicitEuler)
 			Initialize_Implicit_K_And_b();
 	}
 
 	virtual void Advance(const double dt)
 	{
-		switch(time_integration){
+		switch (time_integration) {
 		case TimeIntegration::ExplicitEuler:
-			Advance_Explicit_Euler(dt);break;
+			Advance_Explicit_Euler(dt); break;
 		case TimeIntegration::ImplicitEuler:
-			Advance_Implicit_Euler(dt);break;}
+			Advance_Implicit_Euler(dt); break;
+		}
 	}
-	
+
 	////Set boundary nodes
-	void Set_Boundary_Node(const int p,const Vector3 v=Vector3::Zero()){boundary_nodes[p]=v;}
-	
-	bool Is_Boundary_Node(const int p){return boundary_nodes.find(p)!=boundary_nodes.end();}
+	void Set_Boundary_Node(const int p, const Vector3 v = Vector3::Zero()) { boundary_nodes[p] = v; }
+
+	bool Is_Boundary_Node(const int p) { return boundary_nodes.find(p) != boundary_nodes.end(); }
 
 	//////////////////////////////////////////////////////////////////////////
 	//// P1 TASK: explicit Euler integration and spring force calculation
@@ -96,42 +100,42 @@ public:
 
 	void Clear_Force()
 	{
-		for(int i=0;i<particles.Size();i++){particles.F(i)=Vector3::Zero();}
+		for (int i = 0; i < particles.Size(); i++) { particles.F(i) = Vector3::Zero(); }
 	}
 
 	void Apply_Body_Force(const double dt)
 	{
 		/* Your implementation start */
 
-		/* Your implementation end */	
+		/* Your implementation end */
 	}
 
 	void Apply_Spring_Force(const double dt)
 	{
 		/* Your implementation start */
 
-		/* Your implementation end */	
+		/* Your implementation end */
 	}
 
 	void Enforce_Boundary_Condition()
 	{
 		/* Your implementation start */
 
-		/* Your implementation end */	
+		/* Your implementation end */
 	}
 
 	void Time_Integration(const double dt)
 	{
 		/* Your implementation start */
 
-		/* Your implementation end */		
+		/* Your implementation end */
 	}
-	
+
 	Vector3 Spring_Force(const int spring_index)
 	{
 		//// This is an auxiliary function to compute the spring force f=f_s+f_d for the spring with spring_index. 
 		//// You may want to call this function in Apply_Spring_Force
-		
+
 		/* Your implementation start */
 
 		/* Your implementation end */
@@ -147,7 +151,7 @@ public:
 		//// A key component for a hair simulator is the bending spring (e.g., by connecting particles with a certain index offset).
 		//// Think about how to realize these bending and curly effects with the explicit spring model you have implemented in TASK 1.
 		//// You may also want to take a look at the function Initialize_Simulation_Data() in MassSpringInteractiveDriver.h for the model initialization.
-		
+
 		/* Your implementation start */
 
 		/* Your implementation end */
@@ -156,22 +160,24 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//// TASK 2 (OPTION 2): implicit time integration for inextensible cloth simulation
 	//// The rest part of this file is all for this task.
-	
+
 	////Construct K, step 1: initialize the matrix structure 
 	void Initialize_Implicit_K_And_b()
 	{
-		int n=3*particles.Size();
-		K.resize(n,n);u.resize(n);u.fill((double)0);b.resize(n);b.fill((double)0);
+		int n = 3 * particles.Size();
+		K.resize(n, n); u.resize(n); u.fill((double)0); b.resize(n); b.fill((double)0);
 		std::vector<TripletT> elements;
-		for(int s=0;s<(int)springs.size();s++){int i=springs[s][0];int j=springs[s][1];
-			Add_Block_Triplet_Helper(i,i,elements);
-			Add_Block_Triplet_Helper(i,j,elements);
-			Add_Block_Triplet_Helper(j,i,elements);
-			Add_Block_Triplet_Helper(j,j,elements);}
-		K.setFromTriplets(elements.begin(),elements.end());
-		K.makeCompressed();	
+		for (int s = 0; s < (int)springs.size(); s++) {
+			int i = springs[s][0]; int j = springs[s][1];
+			Add_Block_Triplet_Helper(i, i, elements);
+			Add_Block_Triplet_Helper(i, j, elements);
+			Add_Block_Triplet_Helper(j, i, elements);
+			Add_Block_Triplet_Helper(j, j, elements);
+		}
+		K.setFromTriplets(elements.begin(), elements.end());
+		K.makeCompressed();
 	}
-	
+
 	////Construct K, step 2: fill nonzero elements in K
 	void Update_Implicit_K_And_b(const double dt)
 	{
@@ -185,7 +191,7 @@ public:
 	}
 
 	////Construct K, step 2.1: compute spring force derivative
-	void Compute_Ks_Block(const int s,Matrix3& Ks)
+	void Compute_Ks_Block(const int s, Matrix3& Ks)
 	{
 		/* Your implementation start */
 
@@ -193,7 +199,7 @@ public:
 	}
 
 	////Construct K, step 2.2: compute damping force derivative
-	void Compute_Kd_Block(const int s,Matrix3& Kd)
+	void Compute_Kd_Block(const int s, Matrix3& Kd)
 	{
 		/* Your implementation start */
 
@@ -214,39 +220,48 @@ public:
 
 		Update_Implicit_K_And_b(dt);
 
-		for(int i=0;i<particles.Size();i++){
-			for(int j=0;j<3;j++)u[i*3+j]=particles.V(i)[j];}	////set initial guess to be the velocity from the last time step
+		for (int i = 0; i < particles.Size(); i++) {
+			for (int j = 0; j < 3; j++)u[i * 3 + j] = particles.V(i)[j];
+		}	////set initial guess to be the velocity from the last time step
 
-		SparseSolver::CG(K,u,b);	////solve Ku=b using Conjugate Gradient
+		SparseSolver::CG(K, u, b);	////solve Ku=b using Conjugate Gradient
 
-		for(int i=0;i<particles.Size();i++){
-			Vector3 v;for(int j=0;j<3;j++)v[j]=u[i*3+j];
-			particles.V(i)=v;
-			particles.X(i)+=particles.V(i)*dt;}
+		for (int i = 0; i < particles.Size(); i++) {
+			Vector3 v; for (int j = 0; j < 3; j++)v[j] = u[i * 3 + j];
+			particles.V(i) = v;
+			particles.X(i) += particles.V(i) * dt;
+		}
 	}
 
 	////Hint: you may want to use these functions when assembling your implicit matrix
 	////Add block nonzeros to sparse matrix elements (for initialization)
-	void Add_Block_Triplet_Helper(const int i,const int j,std::vector<TripletT>& elements)
-	{for(int ii=0;ii<3;ii++)for(int jj=0;jj<3;jj++)elements.push_back(TripletT(i*3+ii,j*3+jj,(double)0));}
+	void Add_Block_Triplet_Helper(const int i, const int j, std::vector<TripletT>& elements)
+	{
+		for (int ii = 0; ii < 3; ii++)for (int jj = 0; jj < 3; jj++)elements.push_back(TripletT(i * 3 + ii, j * 3 + jj, (double)0));
+	}
 
 	////Add block Ks to K_ij
-	void Add_Block_Helper(SparseMatrixT& K,const int i,const int j,const Matrix3& Ks)
+	void Add_Block_Helper(SparseMatrixT& K, const int i, const int j, const Matrix3& Ks)
 	{
-		SparseFunc::Add_Block<3,Matrix3>(K,i,i,Ks);
-		SparseFunc::Add_Block<3,Matrix3>(K,j,j,Ks);
-		if(!Is_Boundary_Node(i)&&!Is_Boundary_Node(j)){
-			SparseFunc::Add_Block<3,Matrix3>(K,i,j,-Ks);
-			SparseFunc::Add_Block<3,Matrix3>(K,j,i,-Ks);}
+		SparseFunc::Add_Block<3, Matrix3>(K, i, i, Ks);
+		SparseFunc::Add_Block<3, Matrix3>(K, j, j, Ks);
+		if (!Is_Boundary_Node(i) && !Is_Boundary_Node(j)) {
+			SparseFunc::Add_Block<3, Matrix3>(K, i, j, -Ks);
+			SparseFunc::Add_Block<3, Matrix3>(K, j, i, -Ks);
+		}
 	}
 
 	////Set block values on a vector
-	void Set_Block(VectorX& b,const int i,const Vector3& bi)
-	{for(int ii=0;ii<3;ii++)b[i*3+ii]=bi[ii];}
+	void Set_Block(VectorX& b, const int i, const Vector3& bi)
+	{
+		for (int ii = 0; ii < 3; ii++)b[i * 3 + ii] = bi[ii];
+	}
 
 	////Add block values to a vector
-	void Add_Block(VectorX& b,const int i,const Vector3& bi)
-	{for(int ii=0;ii<3;ii++)b[i*3+ii]+=bi[ii];}
+	void Add_Block(VectorX& b, const int i, const Vector3& bi)
+	{
+		for (int ii = 0; ii < 3; ii++)b[i * 3 + ii] += bi[ii];
+	}
 };
 
 #endif
