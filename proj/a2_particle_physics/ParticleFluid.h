@@ -92,6 +92,22 @@ public:
 	bool Find_Nbs(const VectorD& pos, const std::vector<VectorD>& points, const double kernel_radius,/*returned result*/std::vector<int>& nbs) const
 	{
 		/* Your implementation start */
+
+		nbs.clear();
+
+		VectorDi cell_pos = Cell_Coord(pos);
+
+		for (int i = 0; i < pow(3, d); ++i) {
+			VectorDi neighbor = Nb_R(cell_pos, i);
+			auto iter = voxels.find(neighbor);
+			if(iter != voxels.end()) {
+				for (auto p : iter->second) {
+					if ((points[p] - pos).norm() < kernel_radius)
+						nbs.push_back(p);
+				}
+			}
+		}
+
 		/* Your implementation end */
 		return nbs.size() > 0;
 	}
@@ -175,6 +191,16 @@ public:
 	void Update_Density()
 	{
 		/* Your implementation start */
+
+		for (int i = 0; i < particles.Size(); ++i) {
+			particles.D(i) = 0;
+			
+			for (auto neighbor : neighbors[i]) {
+				VectorD xji = particles.X(neighbor) - particles.X(i);
+				particles.D(i) += particles.M(neighbor) * kernel.Wspiky(xji);
+			}
+		}
+
 		/* Your implementation end */
 	}
 
@@ -183,6 +209,11 @@ public:
 	void Update_Pressure()
 	{
 		/* Your implementation start */
+
+		for (int i = 0; i < particles.Size(); ++i) {
+			particles.P(i) = pressure_density_coef * (particles.D(i) - density_0);
+		}
+
 		/* Your implementation end */
 	}
 
@@ -191,6 +222,15 @@ public:
 	void Update_Pressure_Force()
 	{
 		/* Your implementation start */
+
+		for (int i = 0; i < particles.Size(); ++i) {
+			for (auto j : neighbors[i]) {
+				VectorD xji = particles.X(j) - particles.X(i);
+				particles.F(i) -= (particles.P(j) + particles.P(i)) / 2.0 
+					* particles.M(j) / particles.D(j) * kernel.gradientWspiky(xji);
+			}
+		}
+
 		/* Your implementation end */
 	}
 
@@ -199,6 +239,15 @@ public:
 	void Update_Viscosity_Force()
 	{
 		/* Your implementation start */
+
+		for (int i = 0; i < particles.Size(); ++i) {
+			for (auto j : neighbors[i]) {
+				VectorD xji = particles.X(j) - particles.X(i);
+				particles.F(i) += viscosity_coef * (particles.V(j) - particles.V(i))
+					* particles.M(j) / particles.D(j) * kernel.laplacianWvis(xji);
+			}
+		}
+
 		/* Your implementation end */
 	}
 
