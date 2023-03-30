@@ -25,6 +25,7 @@ public:
 	Vector2 src_pos = Vector2::Ones() * (double).5;				//// source position
 	Vector2 src_vel = Vector2::Unit(0) * (double)1.5;			//// source velocity
 	double src_radius = (double).1;							//// source radius
+	double src_density = (double).1;
 
 	//// grid-related variables
 	int node_num = 0;											//// total number of grid nodes
@@ -123,8 +124,14 @@ public:
 	//// 2D bi-linear interpolation for scalars
 	double Bilinear_Interpolation(const Vector2i& cell, const Vector2& frac, const std::vector<double>& u)
 	{
-		/*Your implementation ends*/
-		return 0.;		//// replace this line with your implementation
+		/*Your implementation starts*/
+		double hl = frac[0], hr = 1.0 - frac[0];
+		double vb = frac[1], vu = 1.0 - frac[1];
+		int ulb = Idx(cell), ulu = Idx(cell + Vector2i(0, 1)), urb = Idx(cell + Vector2i(1, 0)), uru = Idx(cell + Vector2i(1, 1));
+		return hr * vu * u[ulb]
+			+ hr * vb * u[ulu]
+			+ hl * vu * u[urb]
+			+ hl * vb * u[uru];
 		/*Your implementation ends*/
 	}
 
@@ -132,7 +139,13 @@ public:
 	Vector2 Bilinear_Interpolation(const Vector2i& cell, const Vector2& frac, const std::vector<Vector2>& u)
 	{
 		/*Your implementation starts*/
-		return Vector2::Zero();		//// replace this line with your implementation
+		double hl = frac[0], hr = 1.0 - frac[0];
+		double vb = frac[1], vu = 1.0 - frac[1];
+		int ulb = Idx(cell), ulu = Idx(cell + Vector2i(0, 1)), urb = Idx(cell + Vector2i(1, 0)), uru = Idx(cell + Vector2i(1, 1));
+		return hr * vu * u[ulb]
+			+ hr * vb * u[ulu]
+			+ hl * vu * u[urb]
+			+ hl * vb * u[uru];
 		/*Your implementation ends*/
 	}
 
@@ -172,7 +185,12 @@ public:
 	{
 		for (int i = 0; i < node_num; i++) {
 			/*Your implementation starts*/
-
+			Vector2 pos = Pos(i);
+			if ((pos - src_pos).norm() < src_radius)
+			{
+				u[i] = src_vel;
+				smoke_den[i] = src_density;
+			}
 			/*Your implementation ends*/
 		}
 	}
@@ -191,7 +209,13 @@ public:
 			smoke_den[i] = 0.;
 
 			/*Your implementation starts*/
-
+			Vector2 x_now = Pos(i);
+			Vector2 x_pre = x_now - u_copy[i] * dt / 2.0;
+			Vector2 u_pre = Interpolate(u_copy, x_pre);
+			x_pre = x_now - u_pre * dt;
+			
+			u[i] = Interpolate(u_copy, x_pre);
+			smoke_den[i] = Interpolate(den_copy, x_pre);
 			/*Your implementation ends*/
 		}
 	}
@@ -226,7 +250,18 @@ public:
 				Vector2i node = Coord(i);
 
 				/*Your implementation starts*/
+				p[i] = (double)0;
 
+				for (int j = 0; j < 2; ++j) {
+					double u_1 = p[Idx(node - Vector2i::Unit(j))];
+					double u_2 = p[Idx(node + Vector2i::Unit(j))];
+
+					p[i] += u_1 + u_2;
+				}
+
+				p[i] /= dx2;
+				p[i] += -div_u[i];
+				p[i] /= (double)4 / dx2;
 				/*Your implementation ends*/
 			}
 		}
@@ -238,7 +273,14 @@ public:
 			Vector2 grad_p = Vector2::Zero();
 
 			/*Your implementation starts*/
+			for (int j = 0; j < 2; ++j) {
+				double u_1 = p[Idx(node - Vector2i::Unit(j))];
+				double u_2 = p[Idx(node + Vector2i::Unit(j))];
 
+				grad_p[j] = (u_2 - u_1) / (2 * dx);
+			}
+
+			u[i] -= grad_p;
 			/*Your implementation ends*/
 		}
 	}
@@ -257,7 +299,11 @@ public:
 			vor[i] = (double)0;
 
 			/*Your implementation starts*/
-
+			for (int j = 0; j < 2; j++) {
+				Vector2 u_1 = u[Idx(node - Vector2i::Unit(j))];
+				Vector2 u_2 = u[Idx(node + Vector2i::Unit(j))];
+				vor[i] += pow(-1, j) * (u_2[1 - j] - u_1[1 - j]) / (2 * dx);
+			}
 			/*Your implementation ends*/
 		}
 
@@ -268,8 +314,18 @@ public:
 			Vector2i node = Coord(i);
 			N[i] = Vector2::Zero();
 
-			/*Your implementation starts*/
 
+			/*Your implementation starts*/
+			Vector2 grad_vor = Vector2::Zero();
+
+			for (int j = 0; j < 2; ++j) {
+				double u_1 = fabs(vor[Idx(node - Vector2i::Unit(j))]);
+				double u_2 = fabs(vor[Idx(node + Vector2i::Unit(j))]);
+
+				grad_vor[j] = (u_2 - u_1) / (2 * dx);
+			}
+
+			N[i] = grad_vor.normalized();
 			/*Your implementation ends*/
 		}
 
