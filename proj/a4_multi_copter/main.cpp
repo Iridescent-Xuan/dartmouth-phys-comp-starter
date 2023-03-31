@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	//// ATTENTION: You need to set flag=0 for simulation tests and flag=1 for controller tests
 	//// 0-Test simulation (LV1, 3.1-3.2)
 	//// 1-Test controller (LV2, 3.3-3.5)
-	int flag = 0;
+	int flag = 1;
 
 	MultiCopterDriver<3> driver;
 	driver.Initialize(flag);

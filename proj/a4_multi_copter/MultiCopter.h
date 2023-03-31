@@ -220,6 +220,14 @@ public:
 
 		// -- Your implementation starts --
 
+		net_force += mass * g * VectorD::UnitZ();
+		for (int i = 0; i < 4; ++i) {
+			net_force += old_R * body_thrust_vec[i];
+		}
+
+		rigid_body.velocity += net_force / mass * dt;
+		rigid_body.position += rigid_body.velocity * dt;
+
 		// -- Your implementation ends --
 
 		////Angular motion
@@ -254,6 +262,23 @@ public:
 		VectorD body_net_torque = VectorD::Zero();
 
 		// -- Your implementation starts --
+
+		for (int i = 0; i < 4; ++i) {
+			body_net_torque += body_rotor_pos[i].cross(body_thrust_vec[i]);
+			body_net_torque += pow(-1, i) * body_thrust_vec[i] * lambda;
+		}
+
+		MatrixD dot_R;
+		for (int i = 0; i < d; ++i) {
+			dot_R.col(i) = old_omega.cross(old_R.col(i));
+		}
+		rigid_body.R = old_R + dt * dot_R;
+
+		VectorD tau = old_R * body_net_torque;
+		MatrixD I = old_R * body_inertia.asDiagonal() * old_R.transpose();
+		VectorD w = old_omega;
+		auto dot_w = I.inverse() * (tau - w.cross(I * w));
+		rigid_body.omega = old_omega + dot_w * dt;
 
 		// -- Your implementation ends --	
 	}
@@ -298,7 +323,7 @@ public:
 		double total_control_thrust = 0.0;
 
 		// -- Your implementation starts --
-
+		total_control_thrust = mass * g - P_z * (z_ref - z) + D_z * z_rate;
 		// -- Your implementation ends --
 
 		return total_control_thrust;
@@ -312,7 +337,7 @@ public:
 		double total_control_torque = 0.0;
 
 		// -- Your implementation starts --
-
+		total_control_torque = P_yaw * (yaw_ref - yaw) - D_yaw * yaw_rate;
 		// -- Your implementation ends --
 
 		return total_control_torque;
